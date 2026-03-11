@@ -945,14 +945,7 @@ function App() {
                       </div>
                     </div>
 
-                    {formData.ticketQuantity > 1 && (
-                      <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p className="text-sm text-blue-800 flex items-center">
-                          <UserPlus className="h-4 w-4 mr-2 flex-shrink-0" />
-                          {formData.ticketQuantity} senhas selecionadas — {formData.ticketQuantity - 1} acompanhante{formData.ticketQuantity - 1 > 1 ? 's' : ''} além do responsável
-                        </p>
-                      </div>
-                    )}
+
                   </div>
 
                   {/* Método de Pagamento */}
@@ -1139,31 +1132,3 @@ function App() {
 }
 
 export default App;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
