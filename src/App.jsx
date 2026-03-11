@@ -43,13 +43,12 @@ import jardimImage from './assets/happy3.jpg';
 function App() {
   // ⚙️ CONFIGURAÇÃO
   const SERIES_DISPONIVEIS = ['Grupo IV','Grupo V', 'Maternal(3)', 'Maternalzinho(2)', '1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano'];
-  // const SERIES_DISPONIVEIS = ['Grupo IV','Grupo V', 'Maternal(3)', 'Maternalzinho(2)', '1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano','6º Ano', '7º Ano', '8º Ano' ,'9º Ano'];
 
   // ============================================
   // TAXAS DE ANTECIPAÇÃO
   // ============================================
-  const TAXA_ANTECIPACAO_VISTA = 0.0115;    // 1,15% - cartão à vista
-  const TAXA_ANTECIPACAO_PARCELADO = 0.016; // 1,6% ao mês - parcelado
+  const TAXA_ANTECIPACAO_VISTA = 0.0115;
+  const TAXA_ANTECIPACAO_PARCELADO = 0.016;
 
   const calcularTaxaAntecipacao = (valorBase, numParcelas) => {
     if (numParcelas === 1) {
@@ -88,7 +87,6 @@ function App() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
 
-  // SEM FILTRO DE TURNO - Todos os alunos (matutino e vespertino)
   const [selectedSerie, setSelectedSerie] = useState('');
 
   // Função para validar CPF
@@ -130,7 +128,7 @@ function App() {
     }, 100);
   };
 
-  // Função para buscar alunos no Supabase - SEM FILTRO DE TURNO (todos participam)
+  // Função para buscar alunos no Supabase
   const searchStudents = async (searchTerm) => {
     if (searchTerm.length < 2) {
       setStudentsList([]);
@@ -144,12 +142,10 @@ function App() {
       .from('alunos')
       .select('*')
       .ilike('nome_completo', `%${searchTerm}%`)
-      .in('serie', SERIES_DISPONIVEIS);  // ← usa a lista que você já tem
+      .in('serie', SERIES_DISPONIVEIS);
 
-     // Troque o .not() por .in() com as séries permitidas:
     query = query.in('serie', ['Grupo IV', 'Grupo V', 'Maternal(3)', 'Maternalzinho(2)', '1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano']);
       
-      // Aplicar filtro de série se selecionado
       if (selectedSerie) {
         query = query.eq('serie', selectedSerie);
       }
@@ -171,7 +167,6 @@ function App() {
     }
   };
 
-  // Função para selecionar um aluno
   const selectStudent = (student) => {
     setSelectedStudent(student);
     setFormData(prev => ({
@@ -185,7 +180,6 @@ function App() {
     setStudentsList([]);
   };
 
-  // Função para lidar com mudança no campo de busca
   const handleStudentSearchChange = (e) => {
     const value = e.target.value;
     setStudentSearch(value);
@@ -203,7 +197,6 @@ function App() {
     }
   };
 
-  // Limpar seleção de aluno
   const clearStudentSelection = () => {
     setSelectedStudent(null);
     setStudentSearch('');
@@ -218,11 +211,11 @@ function App() {
   };
 
   // ============================================
-  // CÁLCULO DE PREÇO - R$ 80,00 POR ALUNO
+  // CÁLCULO DE PREÇO - R$ 30,00 POR PESSOA
   // Até 3x no cartão com juros
   // ============================================
   const calculatePrice = () => {
-    const PRECO_BASE = 80.0;
+    const PRECO_BASE = 30.0;
     let valorTotal = PRECO_BASE;
     
     if (formData.paymentMethod === 'credit') {
@@ -231,18 +224,13 @@ function App() {
       const parcelas = parseInt(formData.installments) || 1;
       
       if (parcelas === 1) {
-        taxaPercentual = 0.0299;           // 2,99% à vista
+        taxaPercentual = 0.0299;
       } else if (parcelas >= 2 && parcelas <= 3) {
-        taxaPercentual = 0.0349;           // 3,49% de 2 a 3 parcelas
+        taxaPercentual = 0.0349;
       }
       
-      // Taxa do cartão
       const taxaCartao = valorTotal * taxaPercentual;
-      
-      // Taxa de antecipação
       const taxaAntecipacao = calcularTaxaAntecipacao(valorTotal, parcelas);
-      
-      // Valor total = base + taxa cartão + taxa fixa + taxa antecipação
       valorTotal = valorTotal + taxaCartao + taxaFixa + taxaAntecipacao;
     }
     
@@ -335,7 +323,7 @@ function App() {
           ticketQuantity: 1, 
           amount: valorTotal,
           timestamp: new Date().toISOString(),
-          event: 'Amadeus-sitiodopicapau'
+          event: 'Amadeus-paixaodecristo'
         })
       });
 
@@ -415,10 +403,10 @@ function App() {
       <section className="hero-section min-h-screen flex items-center justify-center text-white relative">
         <div className="text-center z-10 max-w-4xl mx-auto px-4">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
-            O Sítio do Picapau Amarelo
+            Paixão de Cristo
           </h1>
           <p className="text-xl md:text-2xl mb-8 opacity-90">
-            Espetáculo Teatral no Teatro Alberto Maranhão
+            Espetáculo Teatral no Centro Educacional Amadeus
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
@@ -433,11 +421,11 @@ function App() {
           <div className="mt-12 flex justify-center items-center space-x-8 text-sm">
             <div className="flex items-center">
               <Calendar className="h-5 w-5 mr-2" />
-              <span translate="no">17 de Março de 2026 (Terça-feira)</span>
+              <span translate="no">18 de Abril de 2026 (Sábado)</span>
             </div>
             <div className="flex items-center">
               <MapPin className="h-5 w-5 mr-2" />
-              Teatro Alberto Maranhão
+              Centro Educacional Amadeus
             </div>
           </div>
         </div>
@@ -448,12 +436,10 @@ function App() {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4 gradient-text">Sobre o Evento</h2>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            A Companhia Encantada de Teatro, em parceria com o projeto "A Escola Vai ao Teatro", 
-            apresentará o clássico musical "O Sítio do Picapau Amarelo" no Teatro Alberto Maranhão. 
-            O Sítio do Picapau Amarelo foi criado por Monteiro Lobato com base no folclore brasileiro, 
-            na cultura popular e na literatura infantil universal, reunindo personagens do imaginário 
-            nacional (como o Saci e a Cuca) e figuras de contos clássicos, integrados a um contexto 
-            rural brasileiro.
+              É com grande alegria que anunciamos a encenação da Paixão de Cristo. Este é sempre um 
+              evento emocionante e significativo para nossa comunidade escolar. Teremos a honra de 
+              inaugurar nosso novo Espaço de Eventos climatizado, tornando este momento ainda mais 
+              especial para toda a família Amadeus.
             </p>
           </div>
 
@@ -463,26 +449,26 @@ function App() {
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
                   <CheckCircle className="h-6 w-6 text-accent mt-1 flex-shrink-0" />
-                  <p>Espetáculo musical clássico da literatura brasileira</p>
+                  <p>Encenação da Paixão de Cristo pela nossa comunidade escolar</p>
                 </div>
                 <div className="flex items-start space-x-3">
                   <CheckCircle className="h-6 w-6 text-accent mt-1 flex-shrink-0" />
-                  <p>Teatro Alberto Maranhão — um dos mais tradicionais da região</p>
+                  <p>Inauguração do novo Espaço de Eventos climatizado do Amadeus</p>
                 </div>
                 <div className="flex items-start space-x-3">
                   <CheckCircle className="h-6 w-6 text-accent mt-1 flex-shrink-0" />
-                  <p>Transporte de ônibus incluso (ida e volta)</p>
+                  <p>Aluno que irá se apresentar tem entrada gratuita</p>
                 </div>
                 <div className="flex items-start space-x-3">
                   <CheckCircle className="h-6 w-6 text-accent mt-1 flex-shrink-0" />
-                  <p>Pipoca inclusa para os alunos</p>
+                  <p>A participação da família é fundamental para tornar este momento especial</p>
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <img src={interiorImage1} alt="Evento escolar" className="rounded-lg shadow-lg h-48 w-full object-cover" />         
               <img src={interiorImage2} alt="Atividade cultural" className="rounded-lg shadow-lg h-48 w-full object-cover" />    
-              <img src={jardimImage} alt="Passeio escolar" className="rounded-lg shadow-lg col-span-2 h-64 w-full object-cover" />
+              <img src={jardimImage} alt="Espetáculo escolar" className="rounded-lg shadow-lg col-span-2 h-64 w-full object-cover" />
             </div>
           </div>
         </div>
@@ -493,7 +479,7 @@ function App() {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">Informações do Evento</h2>
             <p className="text-lg text-muted-foreground">
-              Confira todos os detalhes do passeio
+              Confira todos os detalhes do espetáculo
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -503,17 +489,14 @@ function App() {
                   <Clock className="h-8 w-8 text-primary" />
                 </div>
                 <CardTitle>Data e Horário</CardTitle>
-                <CardDescription translate="no">17 de Março de 2026</CardDescription>
+                <CardDescription translate="no">18 de Abril de 2026</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-center" translate="no">
-                  Saída da escola às 13h
+                  Sessões no período da tarde
                 </p>
-               <p className="text-sm text-center" translate="no">
-                  Retorna à escola às 17h
-                </p>
-                <p className="text-sm text-center font-semibold text-red-600 mt-2">
-                  Neste dia NÃO HAVERÁ AULA
+                <p className="text-sm text-center font-semibold text-blue-600 mt-2">
+                  O número de sessões dependerá da quantidade de participantes
                 </p>
               </CardContent>
             </Card>
@@ -526,23 +509,23 @@ function App() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-center">
-                  Teatro Alberto Maranhão
+                  Centro Educacional Amadeus
                 </p>
                 <p className="text-xs text-center text-muted-foreground mt-1">
-                  Classificação: Livre
+                  Novo Espaço de Eventos Climatizado
                 </p>
               </CardContent>
             </Card>
             <Card className="card-hover">
               <CardHeader className="text-center">
                 <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
-                  <Bus className="h-8 w-8 text-green-600" />
+                  <FileText className="h-8 w-8 text-green-600" />
                 </div>
-                <CardTitle>Transporte</CardTitle>
+                <CardTitle>Figurino</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-center">
-                  Ônibus incluso na taxa (ida e volta)
+                  Deve ser providenciado pelo responsável, conforme modelo indicado pelo(a) professor(a)
                 </p>
               </CardContent>
             </Card>
@@ -551,11 +534,11 @@ function App() {
                 <div className="mx-auto mb-4 p-3 bg-orange-100 rounded-full w-fit">
                   <Users className="h-8 w-8 text-orange-600" />
                 </div>
-                <CardTitle>Alunos</CardTitle>
+                <CardTitle>Acompanhamento</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-center">
-                  Todos os turnos (matutino e vespertino)
+                  Todos os estudantes devem estar, obrigatoriamente, acompanhados de um responsável
                 </p>
               </CardContent>
             </Card>
@@ -575,7 +558,7 @@ function App() {
                 <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <p className="text-sm">
-                    Neste dia (<span translate="no">17/03</span>) <strong>NÃO HAVERÁ AULA</strong>. Todos os alunos (matutino e vespertino) deverão estar na escola às <span translate="no">13 horas</span>.
+                    O espetáculo acontecerá no dia <span translate="no">18/04</span>, no <strong>período da tarde</strong>. O número de sessões será definido conforme a quantidade de participantes confirmados.
                   </p>
                 </div>
               </div>
@@ -583,7 +566,7 @@ function App() {
                 <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <p className="text-sm">
-                    O aluno deverá vir com o <strong>FARDAMENTO COMPLETO</strong>, <strong>GARRAFINHA DE ÁGUA</strong> e <strong>LANCHE</strong>. 
+                    O <strong>FIGURINO</strong> deve ser providenciado pelo responsável. O modelo deve ser consultado diretamente com o(a) professor(a).
                   </p>
                 </div>
               </div>
@@ -591,15 +574,31 @@ function App() {
                 <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <p className="text-sm">
-                    A taxa inclui: <strong>entrada no teatro, transporte (ônibus) e pipoca</strong>.
+                    No dia da apresentação, todos os estudantes devem estar <strong>obrigatoriamente acompanhados de um responsável</strong>.
                   </p>
                 </div>
-              </div>    
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <p className="text-sm">
+                    O aluno que irá se <strong>apresentar no espetáculo terá entrada gratuita</strong>. Os demais acompanhantes pagam R$ 30,00 por pessoa.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <p className="text-sm">
+                    Os valores arrecadados serão destinados ao custeio de <strong>som, ornamentação, aluguel de cadeiras e demais despesas organizacionais</strong>.
+                  </p>
+                </div>
+              </div>
               <div className="flex items-start space-x-3">
                 <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
-                  <p className="text-sm text-red-700 font-semibold" translate="no">
-                    Pagamento obrigatório até 12/03/2026. Após essa data não será possível estender o prazo.
+                  <p className="text-sm text-red-700 font-semibold">
+                    Fiquem atentos aos nossos canais de comunicação para atualizações sobre ensaios e horários.
                   </p>
                 </div>
               </div>  
@@ -613,31 +612,35 @@ function App() {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">Inscrição e Pagamento</h2>
             <p className="text-lg text-muted-foreground">
-              Taxa por aluno — inclui entrada, ônibus e pipoca
+              Valor por pessoa — aluno que se apresenta tem entrada gratuita
             </p>
           </div>
 
           <Card className="mb-8">
             <CardHeader className="text-center">
-              <CardTitle className="text-3xl text-primary" translate="no">R$ 80,00</CardTitle>
-              <CardDescription>por ALUNO</CardDescription>
+              <CardTitle className="text-3xl text-primary" translate="no">R$ 30,00</CardTitle>
+              <CardDescription>por PESSOA</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-semibold mb-3 text-accent">O que está incluído:</h4>
+                  <h4 className="font-semibold mb-3 text-accent">Destinação dos valores:</h4>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center">
                       <CheckCircle className="h-4 w-4 text-accent mr-2" />
-                      Entrada no Teatro Alberto Maranhão
+                      Som e equipamentos
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="h-4 w-4 text-accent mr-2" />
-                      Transporte de ônibus (ida e volta)
+                      Ornamentação do espaço
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="h-4 w-4 text-accent mr-2" />
-                      Pipoca
+                      Aluguel de cadeiras
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircle className="h-4 w-4 text-accent mr-2" />
+                      Demais despesas organizacionais
                     </li>
                   </ul>
                 </div>
@@ -646,11 +649,11 @@ function App() {
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start">
                       <Shield className="h-4 w-4 text-destructive mr-2 mt-0.5" />
-                      <span translate="no">Pagamento obrigatório até 12 de março de 2026</span>
+                      <span>O aluno que se apresenta tem entrada gratuita</span>
                     </li>
                     <li className="flex items-start">
                       <Shield className="h-4 w-4 text-destructive mr-2 mt-0.5" />
-                      Após essa data, não será possível estender o prazo
+                      Ingressos extras disponíveis pelo mesmo valor (R$ 30,00)
                     </li>
                     <li className="flex items-start">
                       <Shield className="h-4 w-4 text-destructive mr-2 mt-0.5" />
@@ -658,7 +661,7 @@ function App() {
                     </li>
                     <li className="flex items-start">
                       <Shield className="h-4 w-4 text-destructive mr-2 mt-0.5" />
-                      Após o pagamento, não será  permitido o reembolso. 
+                      Após o pagamento, não será permitido o reembolso.
                     </li>
                   </ul>
                 </div>
@@ -922,7 +925,7 @@ function App() {
                           <div className="flex items-center space-x-2">
                             <span className="text-lg font-bold">PIX</span>
                             <span className="text-sm" translate="no">
-                              R$ 80,00 (sem taxas)
+                              R$ 30,00 (sem taxas)
                             </span>
                           </div>
                         </div>
@@ -980,7 +983,7 @@ function App() {
                       <div className="text-center" translate="no">
                         <h4 className="text-lg font-bold text-orange-800 mb-1">Valor Total</h4>
                         <div className="text-sm text-gray-600 mb-1">
-                          1 aluno × R$ 80,00
+                          1 ingresso × R$ 30,00
                         </div>
                         <div className="text-2xl font-bold text-orange-900">
                           R$ {valorTotal.toFixed(2).replace('.', ',')}
@@ -1068,7 +1071,7 @@ function App() {
             © 2026 Escola Centro Educacional Amadeus. Todos os direitos reservados.
           </p>
           <p className="text-xs mt-2 opacity-80" translate="no">
-            O Sítio do Picapau Amarelo - Teatro Alberto Maranhão - 17 de Março de 2026
+            Paixão de Cristo - Centro Educacional Amadeus - 18 de Abril de 2026
           </p>
         </div>
       </footer>
@@ -1077,7 +1080,6 @@ function App() {
 }
 
 export default App;
-
 
 
 
