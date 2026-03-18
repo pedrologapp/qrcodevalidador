@@ -70,6 +70,7 @@ function App() {
     cpf: '',
     email: '',
     phone: '',
+    phoneConfirm: '',
     paymentMethod: 'pix',
     installments: 1,
     ticketQuantity: 1
@@ -80,6 +81,10 @@ function App() {
   // Estados para validação de CPF
   const [cpfError, setCpfError] = useState('');
   const [cpfValid, setCpfValid] = useState(false);
+
+  // Estados para validação de telefone
+  const [phoneError, setPhoneError] = useState('');
+  const [phoneValid, setPhoneValid] = useState(false);
 
   // Estados para busca de alunos no Supabase
   const [studentSearch, setStudentSearch] = useState('');
@@ -93,20 +98,16 @@ function App() {
   // Função para validar CPF
   const validarCPF = (cpf) => {
     cpf = cpf.replace(/[^\d]/g, '');
-    
     if (cpf.length !== 11) return false;
     if (/^(\d)\1{10}$/.test(cpf)) return false;
-    
     let soma = 0;
     let resto;
-    
     for (let i = 1; i <= 9; i++) {
       soma += parseInt(cpf.substring(i-1, i)) * (11 - i);
     }
     resto = (soma * 10) % 11;
     if (resto === 10 || resto === 11) resto = 0;
     if (resto !== parseInt(cpf.substring(9, 10))) return false;
-    
     soma = 0;
     for (let i = 1; i <= 10; i++) {
       soma += parseInt(cpf.substring(i-1, i)) * (12 - i);
@@ -114,9 +115,19 @@ function App() {
     resto = (soma * 10) % 11;
     if (resto === 10 || resto === 11) resto = 0;
     if (resto !== parseInt(cpf.substring(10, 11))) return false;
-    
     return true;
   };
+
+  // Formata telefone: (84) 99999-9999
+  const formatarTelefone = (value) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/^(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .replace(/(-\d{4})\d+?$/, '$1');
+  };
+
+  const telDigits = (v) => (v || '').replace(/\D/g, '');
 
   const scrollToSection = (sectionId) => {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
@@ -139,13 +150,13 @@ function App() {
 
     setIsSearching(true);
     try {
-    let query = supabase
-      .from('alunos')
-      .select('*')
-      .ilike('nome_completo', `%${searchTerm}%`)
-      .in('serie', SERIES_DISPONIVEIS);
+      let query = supabase
+        .from('alunos')
+        .select('*')
+        .ilike('nome_completo', `%${searchTerm}%`)
+        .in('serie', SERIES_DISPONIVEIS);
 
-    query = query.in('serie', ['Grupo IV', 'Grupo V', 'Maternal(3)', 'Maternalzinho(2)', '1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano']);
+      query = query.in('serie', ['Grupo IV', 'Grupo V', 'Maternal(3)', 'Maternalzinho(2)', '1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano']);
       
       if (selectedSerie) {
         query = query.eq('serie', selectedSerie);
@@ -272,6 +283,43 @@ function App() {
           setCpfValid(false);
         }
       }
+
+    } else if (name === 'phone') {
+      const formatted = formatarTelefone(value);
+      setFormData(prev => ({ ...prev, phone: formatted }));
+      const digits = telDigits(formatted);
+
+      if (!digits) {
+        setPhoneError(''); setPhoneValid(false); return;
+      }
+      if (digits.length < 11) {
+        setPhoneError('Telefone deve ter 11 dígitos com DDD'); setPhoneValid(false); return;
+      }
+      // telefone ok — compara com confirmação se já preenchida
+      const confirmDigits = telDigits(formData.phoneConfirm);
+      if (confirmDigits && confirmDigits !== digits) {
+        setPhoneError('Os telefones não coincidem'); setPhoneValid(false);
+      } else if (confirmDigits && confirmDigits === digits) {
+        setPhoneError(''); setPhoneValid(true);
+      } else {
+        setPhoneError(''); setPhoneValid(false);
+      }
+
+    } else if (name === 'phoneConfirm') {
+      const formatted = formatarTelefone(value);
+      setFormData(prev => ({ ...prev, phoneConfirm: formatted }));
+      const digits = telDigits(formatted);
+      const originalDigits = telDigits(formData.phone);
+
+      if (!digits) {
+        setPhoneError(''); setPhoneValid(false); return;
+      }
+      if (digits !== originalDigits) {
+        setPhoneError('Os telefones não coincidem'); setPhoneValid(false);
+      } else if (digits.length === 11) {
+        setPhoneError(''); setPhoneValid(true);
+      }
+
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -284,17 +332,24 @@ function App() {
     }
 
     const cpfSemMascara = formData.cpf.replace(/[^\d]/g, '');
-    
     if (!cpfSemMascara || cpfSemMascara.length !== 11) {
       alert('Por favor, preencha um CPF válido.');
       return false;
     }
-    
     if (!validarCPF(cpfSemMascara)) {
       alert('CPF inválido. Verifique os números digitados.');
       return false;
     }
-    
+
+    if (telDigits(formData.phone).length < 11) {
+      alert('Por favor, preencha um WhatsApp válido com DDD.');
+      return false;
+    }
+    if (telDigits(formData.phone) !== telDigits(formData.phoneConfirm)) {
+      alert('Os telefones não coincidem. Verifique e tente novamente.');
+      return false;
+    }
+
     return true;
   };
 
@@ -845,18 +900,68 @@ function App() {
                           placeholder="Nome completo do responsável"
                         />
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="phone">Telefone/WhatsApp *</Label>
-                          <Input
-                            id="phone"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="(84) 99999-9999"
-                          />
+
+                      {/* ================================================ */}
+                      {/* TELEFONE COM CONFIRMAÇÃO                          */}
+                      {/* ================================================ */}
+                      <div className="p-4 rounded-lg border-2 border-blue-200 bg-blue-50 space-y-3">
+                        <p className="text-sm font-semibold text-blue-800 flex items-center">
+                          <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
+                          📲 O QR Code do ingresso será enviado para este WhatsApp — digite com atenção!
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="phone">WhatsApp *</Label>
+                            <Input
+                              id="phone"
+                              name="phone"
+                              value={formData.phone}
+                              onChange={handleInputChange}
+                              required
+                              placeholder="(84) 99999-9999"
+                              maxLength="15"
+                              className={
+                                formData.phone && phoneError
+                                  ? 'border-red-500 bg-red-50'
+                                  : formData.phone && phoneValid
+                                  ? 'border-green-500 bg-green-50'
+                                  : ''
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="phoneConfirm">Confirme o WhatsApp *</Label>
+                            <Input
+                              id="phoneConfirm"
+                              name="phoneConfirm"
+                              value={formData.phoneConfirm}
+                              onChange={handleInputChange}
+                              required
+                              placeholder="(84) 99999-9999"
+                              maxLength="15"
+                              className={
+                                formData.phoneConfirm && phoneError
+                                  ? 'border-red-500 bg-red-50'
+                                  : formData.phoneConfirm && phoneValid
+                                  ? 'border-green-500 bg-green-50'
+                                  : ''
+                              }
+                            />
+                          </div>
                         </div>
+                        {phoneError && (
+                          <p className="text-red-600 text-sm font-medium flex items-center">
+                            <span className="mr-1">⚠️</span> {phoneError}
+                          </p>
+                        )}
+                        {phoneValid && (
+                          <p className="text-green-700 text-sm font-medium flex items-center">
+                            ✅ WhatsApp confirmado! O QR Code será enviado para <strong className="ml-1">{formData.phone}</strong>
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="email">E-mail *</Label>
                           <Input
@@ -944,8 +1049,6 @@ function App() {
                         </Button>
                       </div>
                     </div>
-
-
                   </div>
 
                   {/* Método de Pagamento */}
@@ -972,7 +1075,7 @@ function App() {
                           <div className="flex items-center space-x-2">
                             <span className="text-lg font-bold">PIX</span>
                             <span className="text-sm" translate="no">
-                              R$ 30,00 (sem taxas)
+                              R$ {(30 * formData.ticketQuantity).toFixed(2).replace('.', ',')} (sem taxas)
                             </span>
                           </div>
                         </div>
@@ -1058,7 +1161,7 @@ function App() {
                   <Button 
                     type="submit" 
                     className="w-full bg-orange-600 hover:bg-orange-700 text-white py-6 text-lg font-bold"
-                    disabled={isProcessing || !selectedStudent}
+                    disabled={isProcessing || !selectedStudent || !phoneValid}
                   >
                     {isProcessing ? (
                       <>
@@ -1069,6 +1172,12 @@ function App() {
                       'CONTINUAR PARA PAGAMENTO'
                     )}
                   </Button>
+
+                  {!phoneValid && formData.phone && (
+                    <p className="text-xs text-center text-red-500">
+                      ⚠️ Confirme o WhatsApp corretamente para habilitar o botão
+                    </p>
+                  )}
 
                   <p className="text-xs text-center text-gray-600">
                     Ao finalizar, você será redirecionado para o pagamento via Asaas
@@ -1132,4 +1241,3 @@ function App() {
 }
 
 export default App;
-
