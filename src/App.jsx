@@ -499,7 +499,7 @@ function App() {
             </div>
             <div className="flex items-center">
               <MapPin className="h-5 w-5 mr-2" />
-              Centro Educacional Amadeus
+              Local: Teatro Poti Cavalcanti
             </div>
           </div>
         </div>
@@ -511,9 +511,7 @@ function App() {
             <h2 className="text-4xl font-bold mb-4 gradient-text">Sobre o Evento</h2>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               É com grande alegria que anunciamos a encenação da Paixão de Cristo. Este é sempre um 
-              evento emocionante e significativo para nossa comunidade escolar. Teremos a honra de 
-              inaugurar nosso novo Espaço de Eventos climatizado, tornando este momento ainda mais 
-              especial para toda a família Amadeus.
+              evento emocionante e significativo para nossa comunidade escolar. O espetáculo acontecerá no <strong>Teatro Poti Cavalcanti</strong>, em São Gonçalo do Amarante, tornando este momento ainda mais especial para toda a família Amadeus.
             </p>
           </div>
 
@@ -527,7 +525,7 @@ function App() {
                 </div>
                 <div className="flex items-start space-x-3">
                   <CheckCircle className="h-6 w-6 text-accent mt-1 flex-shrink-0" />
-                  <p>Inauguração do novo Espaço de Eventos climatizado do Amadeus</p>
+                  <<p>Realização no <strong>Teatro Poti Cavalcanti</strong> — R. Alexandre Cavalcante, São Gonçalo do Amarante</p>
                 </div>
                 <div className="flex items-start space-x-3">
                   <CheckCircle className="h-6 w-6 text-accent mt-1 flex-shrink-0" />
@@ -583,10 +581,10 @@ function App() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-center">
-                  Centro Educacional Amadeus
+                  Teatro Poti Cavalcanti
                 </p>
                 <p className="text-xs text-center text-muted-foreground mt-1">
-                  Novo Espaço de Eventos Climatizado
+                  R. Alexandre Cavalcante, São Gonçalo do Amarante - RN
                 </p>
               </CardContent>
             </Card>
