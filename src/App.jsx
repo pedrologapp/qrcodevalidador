@@ -16,14 +16,12 @@ const WEBHOOK_URL = "https://webhook.escolaamadeus.com/webhook/qrcode";
 
 /* ───────────────────────── helpers ───────────────────────── */
 
-/** Vibra o celular (Android + iOS 16.4+ com suporte) */
 function vibrate(ms = 200) {
   try {
     navigator?.vibrate?.(ms);
   } catch (_) {}
 }
 
-/** Toca um beep curto via Web Audio API — funciona em iOS e Android */
 function playBeep(type = "success") {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -49,7 +47,6 @@ function playBeep(type = "success") {
   } catch (_) {}
 }
 
-/** Calcula o tamanho do qrbox responsivo (nunca maior que o container) */
 function getQrBoxSize(containerWidth) {
   const size = Math.floor(Math.min(containerWidth * 0.65, 260));
   return { width: size, height: size };
@@ -71,7 +68,7 @@ export default function QRValidator() {
   const lastScanRef = useRef({ code: null, at: 0 });
   const containerRef = useRef(null);
 
-  /* ── Wake Lock: impede a tela de apagar enquanto escaneia ── */
+  /* ── Wake Lock ── */
   const requestWakeLock = useCallback(async () => {
     try {
       if ("wakeLock" in navigator) {
@@ -119,7 +116,6 @@ export default function QRValidator() {
     if (scannerRef.current) {
       try {
         const state = scannerRef.current.getState?.();
-        // 2 = SCANNING, 3 = PAUSED
         if (state === 2 || state === 3) {
           await scannerRef.current.stop();
         }
@@ -189,7 +185,6 @@ export default function QRValidator() {
   /* ── Callback ao ler um QR Code ── */
   const handleScan = useCallback(
     async (code) => {
-      // Debounce: mesmo código em menos de 3s → ignora
       const now = Date.now();
       if (
         lastScanRef.current.code === code &&
@@ -199,14 +194,16 @@ export default function QRValidator() {
       }
       lastScanRef.current = { code, at: now };
 
-      // Para o scanner enquanto valida (mais confiável que pause no iOS)
-      await cleanupScanner();
-      setScanning(false);
+      // Pausa a câmera (mantém aberta, sem pedir permissão de novo)
+      if (scannerRef.current) {
+        try {
+          scannerRef.current.pause(true);
+        } catch (_) {}
+      }
 
       const entry = await sendToWebhook(code);
       setResult(entry);
 
-      // Feedback tátil + sonoro
       if (entry.status === "success") {
         vibrate(150);
         if (soundOn) playBeep("success");
@@ -221,7 +218,7 @@ export default function QRValidator() {
         setCount((c) => ({ ...c, nao: c.nao + 1 }));
       }
     },
-    [cleanupScanner, sendToWebhook, soundOn]
+    [sendToWebhook, soundOn]
   );
 
   /* ── Inicia o scanner (com fallback de câmera) ── */
@@ -231,10 +228,8 @@ export default function QRValidator() {
     setCameraError(null);
     setResult(null);
 
-    // Limpa qualquer instância anterior
     await cleanupScanner();
 
-    // Garante que o container existe e tem tamanho
     const el = document.getElementById("qr-reader");
     if (!el) return;
 
@@ -245,7 +240,6 @@ export default function QRValidator() {
       const scanner = new window.Html5Qrcode("qr-reader", { verbose: false });
       scannerRef.current = scanner;
 
-      // Tenta câmera traseira primeiro; se falhar, aceita qualquer uma
       try {
         await scanner.start(
           { facingMode: "environment" },
@@ -254,7 +248,6 @@ export default function QRValidator() {
           () => {}
         );
       } catch (envErr) {
-        // Fallback: pega qualquer câmera disponível
         const devices = await window.Html5Qrcode.getCameras();
         if (devices && devices.length > 0) {
           await scanner.start(
@@ -277,9 +270,7 @@ export default function QRValidator() {
           "Você precisa permitir o acesso à câmera. Toque no ícone de cadeado na barra do navegador e ative a câmera."
         );
       } else if (msg.includes("NotFoundError") || msg.includes("no camera")) {
-        setCameraError(
-          "Nenhuma câmera encontrada neste aparelho."
-        );
+        setCameraError("Nenhuma câmera encontrada neste aparelho.");
       } else {
         setCameraError(
           "Não foi possível abrir a câmera. Use um navegador atualizado (Chrome ou Safari) e acesse por HTTPS."
@@ -292,20 +283,26 @@ export default function QRValidator() {
   const continueScan = useCallback(async () => {
     setResult(null);
     setCameraError(null);
-    // Sempre reinicia do zero — mais confiável em mobile
+    // Tenta retomar a câmera pausada (sem pedir permissão de novo)
+    if (scannerRef.current) {
+      try {
+        scannerRef.current.resume();
+        return;
+      } catch (_) {}
+    }
+    // Se falhar, aí sim reinicia do zero
     await startScanning();
   }, [startScanning]);
 
-  /* ── Estilos inline pra safe-area e overscroll ── */
   const rootStyle = {
-    minHeight: "100dvh", // dvh funciona melhor que vh em mobile
+    minHeight: "100dvh",
     paddingTop: "env(safe-area-inset-top)",
     paddingBottom: "env(safe-area-inset-bottom)",
     paddingLeft: "env(safe-area-inset-left)",
     paddingRight: "env(safe-area-inset-right)",
     overscrollBehavior: "none",
     WebkitOverflowScrolling: "touch",
-    touchAction: "manipulation", // remove 300ms tap delay
+    touchAction: "manipulation",
   };
 
   return (
